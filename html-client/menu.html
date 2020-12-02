@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css" />
+    <title>Menu | Cofee Shop</title>
+</head>
+<body class="bg">
+    <div class="container">
+        <a href="employee.html">View all orders</a>
+        <h1>Edit Menu</h1>
+        <p id="no-items-text" style="display: none;">There are currently no menu items. Add something in the form below!</p>
+        <div class="menu-form">
+            <div style="margin-right: 20px;">
+                <label htmlFor="item" >
+                    Item:
+                </label>
+                <input type="text" id="item" />
+            </div>
+            <div style="margin-right: 20px;">
+                <label htmlFor="price" >
+                    Price:
+                </label>
+                <input type="number" min="0" step=".01" id="price" />
+            </div>
+            <button onclick="addToMenu()">Add to menu</button>
+        </div>
+        <div id="employee-menu"></div>
+    </div>
+</body>
+<script>
+    var menu = [];
+
+    function getMenu() {
+        var httpRequest = new XMLHttpRequest();
+        var url = 'http://localhost:8080/menu';
+        httpRequest.open("GET", url, true);
+        httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+        httpRequest.addEventListener("load", () => {
+            if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                menu = JSON.parse(httpRequest.responseText);
+                setMenu();
+            } else {
+                console.error('Something went wrong :(');
+            }
+        });
+
+        httpRequest.send();
+    }
+
+    function addToMenu() {
+        var httpRequest = new XMLHttpRequest();
+        var url = 'http://localhost:8080/menu';
+        httpRequest.open("POST", url, true);
+        httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+        httpRequest.addEventListener("load", () => {
+            if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                menu = JSON.parse(httpRequest.responseText);
+                setMenu();
+            } else {
+                console.error('Something went wrong :(');
+            }
+        });
+        var item = document.getElementById('item').value
+        var price = document.getElementById('price').value
+        if (item && price) {
+            var params = `item=${item}&price=${price}`;
+            httpRequest.send(params);
+        }
+    }
+
+    function deleteFromMenu(item) {
+        var httpRequest = new XMLHttpRequest();
+        var url = 'http://localhost:8080/menu';
+        httpRequest.open("DELETE", url, true);
+        httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+        httpRequest.addEventListener("load", () => {
+            if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                menu = JSON.parse(httpRequest.responseText);
+                setMenu();
+            } else {
+                console.error('Something went wrong :(');
+            }
+        });
+        var params = `item=${item}`;
+        httpRequest.send(params);
+    }
+
+    function setMenu() {
+        var noItemsText = document.getElementById('no-items-text')
+        var menuWrapper = document.getElementById('employee-menu')
+        menuWrapper.innerHTML = '';
+        if (menu.length <= 0) {
+            noItemsText.style.display = 'block'
+            menuWrapper.style.display = 'none'
+        } else {
+            noItemsText.style.display = 'none'
+            menuWrapper.style.display = 'block'
+            menu.map(item => {
+                var itemContainer = document.createElement('div')
+                itemContainer.classList.add('menu-item')
+                itemContainer.innerHTML = `
+                    <p>${item.item}</p>
+                    <p>$${item.price.toFixed(2)}</p>
+                `
+
+                var deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete item';
+                deleteButton.addEventListener("click", () => deleteFromMenu(item.item));
+                itemContainer.appendChild(deleteButton);
+
+                menuWrapper.appendChild(itemContainer)
+            })
+        }
+    }
+
+    getMenu();
+</script>
+</html>

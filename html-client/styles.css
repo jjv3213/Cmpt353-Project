@@ -1,0 +1,51 @@
+.bg {
+  background-color: lightgray;
+}
+
+.center-content {
+  height: 80vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.dashboard-btn {
+  padding: 4px 6px;
+  margin: 0 30px;
+  font-size: 24px;
+}
+
+.name-label {
+  margin-right: 10px;
+}
+
+.menu-form {
+  display: flex;
+}
+
+.container {
+  margin-left: 50px;
+  margin-top: 50px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+}
+
+.menu-item p {
+  margin-right: 20px;
+}
+
+.order-div {
+  display: flex;
+  align-items: center;
+}
+
+.order-div > * {
+  margin-right: 50px;
+}

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css" />
+    <title>Employee | Coffee Shop</title>
+</head>
+<body class="bg">
+    <div id="employee" class="container">
+        <a href="menu.html">Edit Menu</a>
+        <h1>All Orders</h1>
+        <div id="all-orders">
+        </div>
+    </div>
+
+    <script>
+        var orders = [];
+
+        function getOrders() {
+            var httpRequest = new XMLHttpRequest();
+            var url = 'http://localhost:8080/orders';
+            httpRequest.open("GET", url, true);
+            httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            httpRequest.addEventListener("load", () => {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    var allOrders = JSON.parse(httpRequest.responseText);
+                    var notReadyOrders = allOrders.filter(order => order.is_ready === 'false');
+                    orders = notReadyOrders;
+                    setAllOrders();
+                } else {
+                    console.error('Something went wrong :(');
+                }
+            });
+
+            httpRequest.send();
+        }
+
+        function makeOrderReady(name) {
+            var httpRequest = new XMLHttpRequest();
+            var url = 'http://localhost:8080/orders';
+            httpRequest.open("PATCH", url, true);
+            httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            httpRequest.addEventListener("load", () => {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    var allOrders = JSON.parse(httpRequest.responseText);
+                    var notReadyOrders = allOrders.filter(order => order.is_ready === 'false');
+                    orders = notReadyOrders;
+                    setAllOrders();
+                } else {
+                    console.error('Something went wrong :(');
+                }
+            });
+            var params = `name=${name}`;
+            httpRequest.send(params);
+        }
+
+        function setAllOrders() {
+            var ordersWrapper = document.getElementById("all-orders");
+            ordersWrapper.innerHTML = ''
+            if (orders.length > 0) {
+                orders.map(order => {
+                    var orderDiv = document.createElement('div');
+                    orderDiv.style.display = 'flex';
+                    var nameText = document.createElement('p');
+                    nameText.textContent = order.customer;
+                    orderDiv.appendChild(nameText);
+                    orderDiv.classList.add('order-div')
+
+                    var itemsDiv = document.createElement('div');
+                    var orderToDisplay = JSON.parse(order.data);
+                    orderToDisplay.map(item => {
+                        var itemText = document.createElement('p');
+                        itemText.textContent = `${item.item} x ${item.quantity}`;
+                        itemsDiv.appendChild(itemText);
+                    })
+                    orderDiv.appendChild(itemsDiv);
+
+                    var orderReadyButton = document.createElement('button');
+                    orderReadyButton.textContent = 'Make order ready';
+                    orderReadyButton.addEventListener("click", () => makeOrderReady(order.customer));
+                    orderDiv.appendChild(orderReadyButton);
+
+                    ordersWrapper.appendChild(orderDiv);
+                })
+            } else {
+                var noOrdersText = document.createElement('p');
+                noOrdersText.textContent = 'There are currently no orders :(';
+                ordersWrapper.appendChild(noOrdersText);
+            }
+        }
+
+        getOrders();
+    </script>
+</body>
+</html>

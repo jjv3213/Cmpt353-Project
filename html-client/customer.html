@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css" />
+    <title>Customer | Coffee Shop</title>
+</head>
+<body class="bg">
+    <div id="user" class="center-content flex-col">
+        <div style="margin-bottom: 10px;">
+            <label for="name" class="name-label">Name:</label>
+            <input type="text" id="name" name="name">
+        </div>
+        <button onclick="displayCustomerScreen()">Continue</button>
+    </div>
+    <div id="customer" style="display: none;" class="container">
+        <h1>Best Of Our Menu</h1>
+        <div id="customer-menu" class="menu">
+        </div>
+        <button id="make-order-btn" onclick="makeOrder()" style="display: none;">Make order</button>
+        <h1 className="text-4xl text-center font-semibold">Your Order:</h1>
+        <div id="customer-orders"></div>
+        <button onclick="deleteOrder()" style="display: none;" id="delete-btn"></button>
+    </div>
+    <script>
+        var orders = [];
+        var menu = [];
+        var customerDisplayName = '';
+        var customerOrder = null;
+
+        function makeOrder() {
+            var httpRequest = new XMLHttpRequest();
+            var url = 'http://localhost:8080/orders';
+            var data = getOrderData();
+            httpRequest.open("POST", url, true);
+            httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            httpRequest.addEventListener("load", () => {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    orders = JSON.parse(httpRequest.responseText);
+                    customerOrder = orders.filter(order => order.customer === customerDisplayName)[0];
+                    setCustomerOrder();
+                } else {
+                    console.error('Something went wrong :(');
+                }
+            });
+
+            if (!customerOrder && customerDisplayName && data.length > 0) {
+                var params = `customer=${customerDisplayName}&data=${JSON.stringify(data)}`;
+                httpRequest.send(params);
+            } else {
+                console.log('Did not make order')
+            }
+        }
+
+        function getOrders() {
+            var httpRequest = new XMLHttpRequest();
+            var url = 'http://localhost:8080/orders';
+            httpRequest.open("GET", url, true);
+            httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            httpRequest.addEventListener("load", () => {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    orders = JSON.parse(httpRequest.responseText);
+                    customerOrder = orders.filter(order => order.customer === customerDisplayName)[0];
+                    setCustomerOrder();
+                } else {
+                    console.error('Something went wrong :(');
+                }
+            });
+
+            httpRequest.send();
+        }
+
+        function deleteOrder() {
+            var httpRequest = new XMLHttpRequest();
+            var url = 'http://localhost:8080/orders';
+            var data = getOrderData();
+            httpRequest.open("DELETE", url, true);
+            httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            httpRequest.addEventListener("load", () => {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    orders = JSON.parse(httpRequest.responseText);
+                    customerOrder = orders.filter(order => order.customer === customerDisplayName)[0];
+                    setCustomerOrder();
+                } else {
+                    console.error('Something went wrong :(');
+                }
+            });
+
+            if (customerDisplayName) {
+                var params = `name=${customerDisplayName}`;
+                httpRequest.send(params);
+            } else {
+                console.log('Did not delete order')
+            }
+        }
+
+        function getMenu() {
+            var httpRequest = new XMLHttpRequest();
+            var url = 'http://localhost:8080/menu';
+            httpRequest.open("GET", url, true);
+            httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            httpRequest.addEventListener("load", () => {
+                if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    menu = JSON.parse(httpRequest.responseText);
+                    setMenu();
+                } else {
+                    console.error('Something went wrong :(');
+                }
+            });
+
+            httpRequest.send();
+        }
+
+        function setCustomerOrder() {
+            var ordersWrapper = document.getElementById("customer-orders");
+            var deleteBtn = document.getElementById("delete-btn");
+            ordersWrapper.innerHTML = ''
+            if (customerOrder) {
+                var itemsToDisplay = JSON.parse(customerOrder.data);
+
+                itemsToDisplay.forEach(item => {
+                    var itemText = document.createElement('p');
+                    itemText.textContent = `${item.item} x ${item.quantity}`;
+                    ordersWrapper.appendChild(itemText);
+                })
+
+                deleteBtn.style.display = 'block';
+                if (customerOrder.is_ready === 'false') {
+                    deleteBtn.innerText = 'Cancel order'
+                } else {
+                    deleteBtn.innerText = 'Pick up order'
+                }
+            } else {
+                deleteBtn.style.display = 'none';
+                var noItemsText = document.createElement('p');
+                noItemsText.textContent = 'You have no orders. Go ahead and choose something nice from the menu :)';
+                ordersWrapper.appendChild(noItemsText);
+            }
+        }
+
+        function setMenu() {
+            var menuWrapper = document.getElementById("customer-menu");
+            var orderBtn = document.getElementById("make-order-btn");
+            if (menu.length > 0) {
+                orderBtn.style.display = 'block';
+                menu.forEach(item => {
+                    var itemContainer = document.createElement('div')
+                    itemContainer.classList.add('menu-item')
+                    itemContainer.innerHTML = `
+                        <p class="item">${item.item}</p>
+                        <p>$${item.price.toFixed(2)}</p>
+                        <div>
+                            <label for=${item.item}>Quantity:</label>
+                            <input type="number" min="0" id=${item.item} class='quantity' />
+                        </div>
+                    `
+                    menuWrapper.appendChild(itemContainer)
+                })
+            } else {
+                var noItemsText = document.createElement('p');
+                noItemsText.textContent = 'There are currently no menu items.';
+                menuWrapper.appendChild(noItemsText);
+            }
+        }
+
+        function displayCustomerScreen() {
+            var usernameScreen = document.getElementById("user");
+            var customerScreen = document.getElementById("customer");
+            customerDisplayName = document.getElementById("name").value
+
+            usernameScreen.style.display = 'none';
+            customerScreen.style.display = 'block';
+
+            getOrders();
+            getMenu();
+        }
+
+        function getOrderData() {
+            var menuItems = document.querySelectorAll('.menu-item');
+            var menuItemsArr = [].slice.call(menuItems);
+            var orderData = [];
+
+            menuItemsArr.forEach(item => {
+                var quantity = item.getElementsByClassName("quantity")[0].value;
+                var itemName = item.getElementsByClassName("item")[0].innerHTML;
+                if (quantity > 0) {
+                    orderData.push({ item: itemName, quantity: quantity })
+                }
+            })
+
+            return orderData;
+        }
+</script>
+</body>
+</html>
